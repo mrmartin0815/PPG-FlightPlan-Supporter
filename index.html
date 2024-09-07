@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flugrouten-Planer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+</head>
+<body>
+    <h1>Flugrouten-Planer</h1>
+
+    <div class="input-container">
+        <label for="start">Startpunkt (Koordinaten):</label>
+        <input type="text" id="start" placeholder="z.B. 52.5200, 13.4050">
+
+        <label for="end">Endpunkt (Koordinaten):</label>
+        <input type="text" id="end" placeholder="z.B. 48.8566, 2.3522">
+
+        <button id="calculate-route">Route berechnen</button>
+    </div>
+
+    <div id="map" style="height: 500px;"></div>
+
+    <button id="download-gpx" style="display: none;">GPX herunterladen</button>
+
+    <script src="script.js"></script>
+</body>
+</html>
