@@ -1,17 +1,60 @@
 // Initialisiere die Karte mit einem Defaultpunkt und Zoomlevel
-var map = L.map('map').setView([48.534273854587, 9.443447047669531], 10);
+var map = L.map('map').setView([48.534273854587, 9.443447047669531], 14);
 
-// OpenStreetMap Layer hinzufügen
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+// Definiere verschiedene Kartenlayer
+var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
+});
+
+var topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.opentopomap.org/copyright">OpenTopoMap</a> contributors'
+});
+
+// Humanitarian Layer
+var humanitarianLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, Tiles courtesy of Humanitarian OpenStreetMap Team'
+});
+
+var googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+    attribution: '© Google',
+    maxZoom: 20
+});
+
+// Füge den Standard-OSM-Layer zur Karte hinzu
+osmLayer.addTo(map);
+
+// Definiere die Layer-Kontrollfunktion
+var baseMaps = {
+    "OpenStreetMap Standard": osmLayer,
+    "Humanitarian": humanitarianLayer,
+    "Topoansicht": topoLayer,
+    "googleSatellite": googleSatellite
+};
+
+// Füge die Layer-Kontrolle zur Karte hinzu
+L.control.layers(baseMaps).addTo(map);
+
+// Mindestfläche in Quadratmetern, unter der Flächen nicht angezeigt werden
+var minArea = 250000;
 
 // Variablen für die Marker und Linie
 var startMarker, endMarker, routeLine;
 
-// Mindestfläche in Quadratmetern, unter der Flächen nicht angezeigt werden
-var minArea = 250000; 
+// Funktion, um eine Bounding Box basierend auf den Koordinaten und einem erweiterten Radius zu berechnen
+function getBoundingBoxForRoute(startLat, startLng, endLat, endLng, radius) {
+    var bufferLat = radius / 111; // Umrechnung von km in Breitengrad
+    var bufferLng = radius / (111 * Math.cos(startLat * Math.PI / 180)); // Umrechnung von km in Längengrad
+
+    var minLat = Math.min(startLat, endLat) - bufferLat;
+    var maxLat = Math.max(startLat, endLat) + bufferLat;
+    var minLng = Math.min(startLng, endLng) - bufferLng;
+    var maxLng = Math.max(startLng, endLng) + bufferLng;
+
+    return {minLat, minLng, maxLat, maxLng};
+}
 
 // Funktion, um die Route (blaue Linie) und die Marker (Start: rot, Ende: grün) darzustellen
 function setRouteAndMarkers(startLat, startLng, endLat, endLng) {
@@ -43,18 +86,50 @@ function setRouteAndMarkers(startLat, startLng, endLat, endLng) {
     }).addTo(map);
 }
 
-// Funktion, um eine Bounding Box basierend auf den Koordinaten und einem erweiterten Radius zu berechnen
-function getBoundingBoxForRoute(startLat, startLng, endLat, endLng, radius) {
-    var bufferLat = radius / 111; // Umrechnung von km in Breitengrad
-    var bufferLng = radius / (111 * Math.cos(startLat * Math.PI / 180)); // Umrechnung von km in Längengrad
-
-    var minLat = Math.min(startLat, endLat) - bufferLat;
-    var maxLat = Math.max(startLat, endLat) + bufferLat;
-    var minLng = Math.min(startLng, endLng) - bufferLng;
-    var maxLng = Math.max(startLng, endLng) + bufferLng;
-
-    return {minLat, minLng, maxLat, maxLng};
+// Funktion, um die Start- oder Endkoordinaten zu setzen und die Marker zu aktualisieren
+function setCoordinate(type, lat, lng) {
+    if (type === 'start') {
+        document.getElementById('start-coordinates').value = lat + ', ' + lng;
+        if (endMarker) {
+            setRouteAndMarkers(lat, lng, endMarker.getLatLng().lat, endMarker.getLatLng().lng);
+        } else {
+            startMarker = L.circleMarker([lat, lng], {color: "red", radius: 8}).addTo(map);
+        }
+    } else if (type === 'end') {
+        document.getElementById('end-coordinates').value = lat + ', ' + lng;
+        if (startMarker) {
+            setRouteAndMarkers(startMarker.getLatLng().lat, startMarker.getLatLng().lng, lat, lng);
+        } else {
+            endMarker = L.circleMarker([lat, lng], {color: "green", radius: 8}).addTo(map);
+        }
+    }
 }
+
+// Rechtsklick-Event, um ein Popup-Menü anzuzeigen
+map.on('contextmenu', function(e) {
+    // Erstelle das Popup-Menü
+    var popup = L.popup()
+        .setLatLng(e.latlng)
+        .setContent(`
+            <div>
+                <button id="set-start">Als Startpunkt festlegen</button><br>
+                <button id="set-end">Als Endpunkt festlegen</button>
+            </div>
+        `)
+        .openOn(map);
+
+    // Event-Listener für "Als Startpunkt festlegen"
+    document.getElementById('set-start').addEventListener('click', function() {
+        setCoordinate('start', e.latlng.lat, e.latlng.lng);
+        map.closePopup();
+    });
+
+    // Event-Listener für "Als Endpunkt festlegen"
+    document.getElementById('set-end').addEventListener('click', function() {
+        setCoordinate('end', e.latlng.lat, e.latlng.lng);
+        map.closePopup();
+    });
+});
 
 // Funktion, um bebautes/bewaldetes Gebiet im Umkreis von 10 km um die Route zu finden
 function findUnbebauteFlaechen(startLat, startLng, endLat, endLng) {
@@ -72,6 +147,10 @@ function findUnbebauteFlaechen(startLat, startLng, endLat, endLng) {
       way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="military"];
       way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="railway"];
       way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="cemetery"];
+      
+      // Windräder und Türme (als Punkte)
+      node(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["generator:source"="wind"];
+      node(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["man_made"="tower"];
       
       relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="residential"];
       relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="industrial"];
@@ -95,24 +174,45 @@ function findUnbebauteFlaechen(startLat, startLng, endLat, endLng) {
         .then(data => {
             var geojson = osmtogeojson(data); // OSM-Daten in GeoJSON umwandeln
 
-            // Filtere kleine Flächen heraus
+            // Filtere kleine Flächen heraus und style die GeoJSON-Features
             var filteredGeojson = L.geoJSON(geojson, {
                 style: function(feature) {
-                    // Überprüfen, ob es sich um ein besiedeltes/bebautes Gebiet handelt
-                    var landuse = feature.properties.tags && feature.properties.tags.landuse;
-                    if (landuse === "residential" || landuse === "industrial" || landuse === "commercial" || landuse === "retail") {
-                        return {color: "#8B4513", fillOpacity: 0.5}; // Dunkelbraun für besiedelte Gebiete
+                    // Überprüfe, ob es sich um eine Fläche handelt
+                    if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
+                        var landuse = feature.properties.tags && feature.properties.tags.landuse;
+                        if (landuse === "residential" || landuse === "industrial" || landuse === "commercial" || landuse === "retail"  || landuse === "cemetery") {
+                            return {color: "#8B4513", fillOpacity: 0.5}; // Dunkelbraun für besiedelte Gebiete
+                        }
+                        return {color: "#808080", fillOpacity: 0.5}; // Grau für alle anderen Flächen
                     }
-                    return {color: "#808080", fillOpacity: 0.5}; // Grau für alle anderen Flächen
+                    // Keine Stile für Punkte wie Windräder und Türme anwenden
+                    return null;
                 },
                 filter: function(feature) {
-                    // Berechne die Fläche für Polygone (nur für Flächengeometrien)
-                    if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
-                        // Berechne die Fläche mit Turf.js
-                        var area = turf.area(feature); // Fläche in Quadratmetern
-                        return area > minArea; // Nur darstellen, wenn die Fläche größer als minArea ist
+                    var landuse = feature.properties.tags && feature.properties.tags.landuse;
+                    // MinArea nur auf nicht besiedelte Flächen anwenden
+                    if (landuse !== "residential" && landuse !== "industrial" && landuse !== "commercial" && landuse !== "retail" && landuse !== "cemetery") {
+                        if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
+                            var area = turf.area(feature); // Fläche in Quadratmetern
+                            return area > minArea; // Nur darstellen, wenn die Fläche größer als minArea ist
+                        }
                     }
-                    return true; // Alle anderen Geometrien (Linien, Punkte) werden nicht gefiltert
+                    // Besiedelte Flächen immer anzeigen
+                    return true;
+                },
+                pointToLayer: function(feature, latlng) {
+                    var type = feature.properties.tags && feature.properties.tags["generator:source"];
+                    var manMade = feature.properties.tags && feature.properties.tags["man_made"];
+                    // Windräder und Türme als kleine rote Kreise anzeigen
+                    if (type === "wind" || manMade === "tower") {
+                        return L.circleMarker(latlng, {
+                            radius: 5, // Größe des Kreises
+                            color: "red", // Roter Rand
+                            fillColor: "red", // Rote Füllung
+                            fillOpacity: 0.5,
+                            weight: 1
+                        });
+                    }
                 }
             });
 
@@ -131,9 +231,6 @@ document.getElementById('search').addEventListener('click', function() {
     var startLng = parseFloat(startCoordinates[1]);
     var endLat = parseFloat(endCoordinates[0]);
     var endLng = parseFloat(endCoordinates[1]);
-
-    // Setze Marker und Linie auf der Karte
-    setRouteAndMarkers(startLat, startLng, endLat, endLng);
 
     // Berechne die bebauten/bewaldeten Flächen im Umkreis von 10 km um die Route
     findUnbebauteFlaechen(startLat, startLng, endLat, endLng);

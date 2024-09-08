@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <!-- Einfügen von Turf.js -->
 	<script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+    <!-- Leaflet.GeometryUtil -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.geometryutil/0.9.3/leaflet.geometryutil.min.js"></script>
     <!-- Eigene Styles -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -15,10 +17,10 @@
     <div class="container">
         <div class="controls">
             <label for="start-coordinates">Startpunkt (Lat, Lng):</label>
-            <input type="text" id="start-coordinates" value="48.534273854587, 9.443447047669531">
+            <input type="text" id="start-coordinates" readonly>
             <br><br>
             <label for="end-coordinates">Endpunkt (Lat, Lng):</label>
-            <input type="text" id="end-coordinates" value="48.416053372701334, 9.561772511532784">
+            <input type="text" id="end-coordinates" readonly>
             <br><br>
             <button id="search">Berechnung starten</button>
         </div>
