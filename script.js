@@ -1,234 +1,140 @@
-document.getElementById('calculate-route').addEventListener('click', async () => {
-    const start = document.getElementById('start').value;
-    const end = document.getElementById('end').value;
+// Initialisiere die Karte mit einem Defaultpunkt und Zoomlevel
+var map = L.map('map').setView([48.534273854587, 9.443447047669531], 10);
 
-    if (!start || !end) {
-        alert('Bitte geben Sie sowohl den Start- als auch den Endpunkt ein.');
-        return;
-    }
-
-    const [startLat, startLon] = start.split(',').map(Number);
-    const [endLat, endLon] = end.split(',').map(Number);
-
-    // Rufe bebautes Gebiet und Wälder entlang der Route ab
-    const avoidanceAreas = await fetchOverpassData(startLat, startLon, endLat, endLon);
-
-    // Berechne die Route, die diese Gebiete vermeidet
-    const route = calculateRouteWithAvoidance(startLat, startLon, endLat, endLon, avoidanceAreas);
-
-    // Route auf der Karte anzeigen und Polygone visualisieren
-    displayRouteOnMap(route, avoidanceAreas); 
-
-    enableDownload(route);
-});
-
-
-// Abrufen von bebauten Gebieten und Wäldern entlang der Route
-async function fetchOverpassData(startLat, startLon, endLat, endLon) {
-    const bbox = `${Math.min(startLat, endLat) - 0.05},${Math.min(startLon, endLon) - 0.05},${Math.max(startLat, endLat) + 0.05},${Math.max(startLon, endLon) + 0.05}`;
-
-	const query = `
-		[out:json];
-		(
-		way["landuse"="residential"](${bbox});
-		way["natural"="wood"](${bbox});     // Waldgebiete
-		way["landuse"="forest"](${bbox});   // Waldnutzung
-		relation["natural"="wood"](${bbox});  // Große Waldgebiete, die als Relation gespeichert sind
-		relation["landuse"="forest"](${bbox}); // Große Waldnutzung als Relation
-		);
-		out body;
-		>;
-		out skel qt;
-	`;
-
-
-    const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-
-    if (response.ok) {
-        const data = await response.json();
-        console.log('Overpass API Daten:', data);
-        return extractPolygonsFromOverpassData(data); // Gib die Polygone zurück
-    } else {
-        console.error('Overpass API Fehler:', response.statusText);
-        return null;
-    }
-}
-
-
-
-// Berechne die Route, die bebaute Gebiete und Wälder vermeidet
-function calculateRouteWithAvoidance(startLat, startLon, endLat, endLon, avoidanceAreas) {
-    const coordinates = [
-        { lat: startLat, lon: startLon },
-        { lat: endLat, lon: endLon }
-    ];
-
-    // Route anpassen, um die bebaute Gebiete und Wälder zu vermeiden
-    const adjustedRoute = avoidAreas(coordinates, avoidanceAreas);
-
-    console.log('Berechnete und angepasste Route:', adjustedRoute);
-    return { coordinates: adjustedRoute };
-}
-
-
-// Diese Funktion überprüft, ob Punkte in bebauten Gebieten liegen und passt die Route an
-function avoidAreas(coordinates, avoidanceAreas) {
-    const adjustedRoute = [];
-
-    coordinates.forEach(coord => {
-        let avoid = false;
-
-        // Überprüfe für jedes Polygon, ob die Koordinate innerhalb des Gebiets liegt
-        avoidanceAreas.forEach((polygon, index) => {
-            if (isPointInPolygon([coord.lat, coord.lon], polygon)) {
-                console.log(`Koordinate (${coord.lat}, ${coord.lon}) liegt in Gebiet ${index}`);
-                avoid = true;
-            }
-        });
-
-        // Falls die Koordinate in einem verbotenen Gebiet liegt, weiche ab
-        if (avoid) {
-            console.log(`Koordinate in verbotenem Gebiet. Anpassung notwendig für: ${coord.lat}, ${coord.lon}`);
-
-            // Beispiel: Verschiebe die Koordinate leicht, um das Gebiet zu umgehen
-            adjustedRoute.push({
-                lat: coord.lat + 0.01, // Anpassung: kleine Abweichung
-                lon: coord.lon + 0.01
-            });
-        } else {
-            adjustedRoute.push(coord); // Wenn kein Hindernis vorliegt, nutze die ursprüngliche Koordinate
-        }
-    });
-
-    return adjustedRoute;
-}
-
-
-
-
-// Prüft, ob ein Punkt innerhalb eines Polygons liegt (Ray-Casting-Algorithmus)
-function isPointInPolygon(point, polygon) {
-    const [x, y] = point;
-    let inside = false;
-
-    console.log('Überprüfe Punkt:', point, 'gegen Polygon:', polygon);
-
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-        const [xi, yi] = polygon[i];
-        const [xj, yj] = polygon[j];
-
-        const intersect = ((yi > y) !== (yj > y)) && 
-                          (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-        if (intersect) inside = !inside;
-    }
-
-    console.log(`Punkt (${x}, ${y}) liegt ${inside ? 'innerhalb' : 'außerhalb'} des Polygons`);
-    
-    return inside;
-}
-
-
-
-
-
-// Extrahiere Polygone (Gebiete) aus den Overpass-Daten
-function extractPolygonsFromOverpassData(data) {
-    const nodes = {};
-    const polygons = [];
-
-    // Erstelle ein Dictionary aller nodes mit ihren Koordinaten
-    data.elements.forEach(element => {
-        if (element.type === 'node') {
-            nodes[element.id] = [element.lat, element.lon];
-        }
-    });
-
-    // Erstelle Polygone aus den way- und relation-Elementen
-    data.elements.forEach(element => {
-        if (element.type === 'way' && element.nodes) {
-            const polygon = element.nodes.map(nodeId => nodes[nodeId]);
-            if (polygon.length > 0) {
-                polygons.push(polygon);
-            }
-        }
-
-        // Verarbeite Relationen (Multipolygone) und prüfe, ob members und nodes existieren
-        if (element.type === 'relation' && element.members) {
-            element.members.forEach(member => {
-			if (member.type === 'way' && member.role === 'outer') {
-				if (!member.nodes) {
-					console.error(`Keine Nodes in Relation: ${member.type}, Role: ${member.role}`);
-				} else {
-					const polygon = member.nodes.map(nodeId => nodes[nodeId]);
-					if (polygon.length > 0) {
-						polygons.push(polygon);
-						}
-					}
-				}
-			});
-
-        }
-    });
-
-    console.log('Extrahierte Polygone (Gebiete):', polygons);
-    return polygons;
-}
-
-
-
-
-
-const map = L.map('map').setView([52.52, 13.405], 5);
-
+// OpenStreetMap Layer hinzufügen
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18,
-    attribution: '© OpenStreetMap'
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 
-let routeLayer;
+// Variablen für die Marker und Linie
+var startMarker, endMarker, routeLine;
 
+// Mindestfläche in Quadratmetern, unter der Flächen nicht angezeigt werden
+var minArea = 250000; 
 
+// Funktion, um die Route (blaue Linie) und die Marker (Start: rot, Ende: grün) darzustellen
+function setRouteAndMarkers(startLat, startLng, endLat, endLng) {
+    // Falls Marker und Linie existieren, entferne sie
+    if (startMarker) map.removeLayer(startMarker);
+    if (endMarker) map.removeLayer(endMarker);
+    if (routeLine) map.removeLayer(routeLine);
 
-function displayRouteOnMap(route, polygons = []) {
-    if (routeLayer) {
-        map.removeLayer(routeLayer);
-    }
+    // Setze den roten Marker für den Startpunkt
+    startMarker = L.circleMarker([startLat, startLng], {
+        color: "#ff0000",
+        radius: 8,
+        fillColor: "#ff0000",
+        fillOpacity: 1
+    }).addTo(map);
 
-    const latlngs = route.coordinates.map(coord => [coord.lat, coord.lon]);
-    routeLayer = L.polyline(latlngs, { color: 'blue' }).addTo(map);
-    map.fitBounds(routeLayer.getBounds());
+    // Setze den grünen Marker für den Endpunkt
+    endMarker = L.circleMarker([endLat, endLng], {
+        color: "#00ff00",
+        radius: 8,
+        fillColor: "#00ff00",
+        fillOpacity: 1
+    }).addTo(map);
 
-    // Polygone auf der Karte darstellen
-    polygons.forEach(polygon => {
-        const polygonLatLngs = polygon.map(coord => [coord[0], coord[1]]);
-        L.polygon(polygonLatLngs, { color: 'red' }).addTo(map); // Polygone in rot darstellen
-    });
+    // Zeichne die blaue Linie zwischen Start- und Endpunkt
+    routeLine = L.polyline([[startLat, startLng], [endLat, endLng]], {
+        color: 'blue',
+        weight: 3
+    }).addTo(map);
 }
 
+// Funktion, um eine Bounding Box basierend auf den Koordinaten und einem erweiterten Radius zu berechnen
+function getBoundingBoxForRoute(startLat, startLng, endLat, endLng, radius) {
+    var bufferLat = radius / 111; // Umrechnung von km in Breitengrad
+    var bufferLng = radius / (111 * Math.cos(startLat * Math.PI / 180)); // Umrechnung von km in Längengrad
 
+    var minLat = Math.min(startLat, endLat) - bufferLat;
+    var maxLat = Math.max(startLat, endLat) + bufferLat;
+    var minLng = Math.min(startLng, endLng) - bufferLng;
+    var maxLng = Math.max(startLng, endLng) + bufferLng;
 
-
-
-function enableDownload(route) {
-    const gpxData = generateGPX(route);
-    const blob = new Blob([gpxData], { type: 'application/gpx+xml' });
-    const url = URL.createObjectURL(blob);
-
-    const downloadButton = document.getElementById('download-gpx');
-    downloadButton.href = url;
-    downloadButton.download = 'route.gpx';
-    downloadButton.style.display = 'block';
+    return {minLat, minLng, maxLat, maxLng};
 }
 
-function generateGPX(route) {
-    let gpx = `<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-    <gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="Flugrouten-Planer">
-        <trk><name>Berechnete Route</name><trkseg>`;
-    
-    route.coordinates.forEach(coord => {
-        gpx += `<trkpt lat="${coord.lat}" lon="${coord.lon}"></trkpt>`;
-    });
+// Funktion, um bebautes/bewaldetes Gebiet im Umkreis von 10 km um die Route zu finden
+function findUnbebauteFlaechen(startLat, startLng, endLat, endLng) {
+    var bbox = getBoundingBoxForRoute(startLat, startLng, endLat, endLng, 10);
 
-    gpx += `</trkseg></trk></gpx>`;
-    return gpx;
+    var query = `
+    [out:json];
+    (
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="residential"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="industrial"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="commercial"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="forest"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["natural"="wood"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="retail"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="military"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="railway"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="cemetery"];
+      
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="residential"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="industrial"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="commercial"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="forest"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["natural"="wood"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="retail"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="military"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="railway"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="cemetery"];
+    );
+    out body;
+    >;
+    out skel qt;
+    `;
+
+    var url = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            var geojson = osmtogeojson(data); // OSM-Daten in GeoJSON umwandeln
+
+            // Filtere kleine Flächen heraus
+            var filteredGeojson = L.geoJSON(geojson, {
+                style: function(feature) {
+                    // Überprüfen, ob es sich um ein besiedeltes/bebautes Gebiet handelt
+                    var landuse = feature.properties.tags && feature.properties.tags.landuse;
+                    if (landuse === "residential" || landuse === "industrial" || landuse === "commercial" || landuse === "retail") {
+                        return {color: "#8B4513", fillOpacity: 0.5}; // Dunkelbraun für besiedelte Gebiete
+                    }
+                    return {color: "#808080", fillOpacity: 0.5}; // Grau für alle anderen Flächen
+                },
+                filter: function(feature) {
+                    // Berechne die Fläche für Polygone (nur für Flächengeometrien)
+                    if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
+                        // Berechne die Fläche mit Turf.js
+                        var area = turf.area(feature); // Fläche in Quadratmetern
+                        return area > minArea; // Nur darstellen, wenn die Fläche größer als minArea ist
+                    }
+                    return true; // Alle anderen Geometrien (Linien, Punkte) werden nicht gefiltert
+                }
+            });
+
+            // Füge das gefilterte Layer zur Karte hinzu
+            map.addLayer(filteredGeojson);
+        })
+        .catch(err => console.log("Fehler bei der Abfrage: ", err));
 }
+
+// Button-Event für Berechnung
+document.getElementById('search').addEventListener('click', function() {
+    var startCoordinates = document.getElementById('start-coordinates').value.split(',');
+    var endCoordinates = document.getElementById('end-coordinates').value.split(',');
+
+    var startLat = parseFloat(startCoordinates[0]);
+    var startLng = parseFloat(startCoordinates[1]);
+    var endLat = parseFloat(endCoordinates[0]);
+    var endLng = parseFloat(endCoordinates[1]);
+
+    // Setze Marker und Linie auf der Karte
+    setRouteAndMarkers(startLat, startLng, endLat, endLng);
+
+    // Berechne die bebauten/bewaldeten Flächen im Umkreis von 10 km um die Route
+    findUnbebauteFlaechen(startLat, startLng, endLat, endLng);
+});

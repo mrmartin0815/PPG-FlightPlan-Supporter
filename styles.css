@@ -1,40 +1,43 @@
-body {
-    font-family: Arial, sans-serif;
+/* Allgemeine Seiteinstellungen */
+body, html {
     margin: 0;
     padding: 0;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
 }
 
-h1 {
-    margin-top: 20px;
+/* Container für Eingabefelder und Karte */
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
-.input-container {
-    margin-bottom: 20px;
-}
-
-input {
-    margin: 5px 0;
+/* Eingabefelder und Button oben in einer Zeile */
+.controls {
+    display: flex;
+    flex-wrap: wrap; /* Elemente umbrechen, wenn zu wenig Platz vorhanden ist */
     padding: 10px;
-    width: 200px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+    gap: 10px; /* Abstand zwischen den Eingabefeldern */
 }
 
-button {
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
+/* Flex-Elemente in den Eingabefeldern */
+.controls label {
+    margin-right: 10px;
 }
 
-button:hover {
-    background-color: #0056b3;
+.controls input {
+    flex: 1 1 200px; /* Eingabefelder skalieren flexibel mit min. Breite von 200px */
 }
 
+.controls button {
+    flex: 0 0 auto; /* Button bleibt in seiner natürlichen Größe */
+}
+
+/* Die Karte füllt den gesamten verbleibenden Platz */
 #map {
-    width: 80%;
-    height: 500px;
-    margin-top: 20px;
+    flex-grow: 1; /* Füllt den restlichen Platz der Seite */
 }
