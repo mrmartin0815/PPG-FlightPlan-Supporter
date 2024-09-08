@@ -205,7 +205,7 @@ function findFlächenImUmkreis(lat, lng, radius) {
                             return {color: "#8b5a2b", fillOpacity: 0.5}; // Dunkelbraun für besiedelte Gebiete
                         }
                         // Stil für bebaute kommerzielle Flächen (residential, commercial, etc.)
-                        if (landuse === "industrial" || landuse === "commercial" || landuse === "retail" || landuse === "farmyard") {
+                        if (landuse === "industrial" || landuse === "commercial" || landuse === "retail" || landuse === "farmyard" || landuse === "military") {
                             return {color: "#cd853f", fillOpacity: 0.5}; // Helleres Dunkelbraun für kommerzielle Gebiete
                         }
                         // Stil für Campingplätze
@@ -213,7 +213,7 @@ function findFlächenImUmkreis(lat, lng, radius) {
                             return {color: "#8b5a2b", fillOpacity: 0.5}; // Grau für Campingplätze (wie andere Flächen)
                         }
                         // Stil für alle anderen Flächen (z.B. Wälder)
-                        return {color: "#556b2f", fillOpacity: 0.5}; // Gruen für alle anderen Flächen
+                        return {color: "#698b69", fillOpacity: 0.5}; // Gruen für alle anderen Flächen
                     }
                     // Start- und Landebahnen als lilafarbene dicke Linien anzeigen
                     if (feature.properties.tags && feature.properties.tags.aeroway === "runway") {
@@ -322,7 +322,7 @@ function findUnbebauteFlaechen(startLat, startLng, endLat, endLng) {
                             return {color: "#8b5a2b", fillOpacity: 0.5}; // Dunkelbraun für besiedelte Gebiete
                         }
                         // Stil für bebaute kommerzielle Flächen (residential, commercial, etc.)
-                        if (landuse === "industrial" || landuse === "commercial" || landuse === "retail" || landuse === "farmyard") {
+                        if (landuse === "industrial" || landuse === "commercial" || landuse === "retail" || landuse === "farmyard" || landuse === "military") {
                             return {color: "#cd853f", fillOpacity: 0.5}; // Helleres Dunkelbraun für kommerzielle Gebiete
                         }
                         // Stil für Campingplätze
@@ -330,7 +330,7 @@ function findUnbebauteFlaechen(startLat, startLng, endLat, endLng) {
                             return {color: "#8b5a2b", fillOpacity: 0.5}; // Grau für Campingplätze (wie andere Flächen)
                         }
                         // Stil für alle anderen Flächen (z.B. Wälder)
-                        return {color: "#556b2f", fillOpacity: 0.5}; // Gruen für alle anderen Flächen
+                        return {color: "#698b69", fillOpacity: 0.5}; // Gruen für alle anderen Flächen
                     }
                     // Start- und Landebahnen als lilafarbene dicke Linien anzeigen
                     if (feature.properties.tags && feature.properties.tags.aeroway === "runway") {
@@ -343,7 +343,7 @@ function findUnbebauteFlaechen(startLat, startLng, endLat, endLng) {
                     var landuse = feature.properties.tags && feature.properties.tags.landuse;
                     var tourism = feature.properties.tags && feature.properties.tags.tourism;
                     // MinArea nur auf nicht besiedelte Flächen anwenden
-                    if (landuse !== "residential" && landuse !== "industrial" && landuse !== "commercial" && landuse !== "retail" && landuse !== "cemetery" && landuse !== "farmyard" && tourism !== "camp_site") {
+                    if (landuse !== "residential" && landuse !== "industrial" && landuse !== "commercial" && landuse !== "retail" && landuse !== "cemetery" && landuse !== "farmyard" && landuse !== "military" && tourism !== "camp_site") {
                         if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
                             var area = turf.area(feature); // Fläche in Quadratmetern
                             return area > minArea; // Nur darstellen, wenn die Fläche größer als minArea ist

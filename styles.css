@@ -78,11 +78,11 @@ button:hover {
 }
 
 /* Responsive Anpassung für kleine Bildschirme */
-@media (max-width: 600px) {
+@media (max-width: 400px) {
     .controls {
         flex-direction: column;
         width: 100%;
-        max-height: 30%; /* Erhöhte max. Höhe der Eingabeelemente auf kleinen Bildschirmen */
+        max-height: 40%; /* Erhöhte max. Höhe der Eingabeelemente auf kleinen Bildschirmen */
     }
 
     button {
