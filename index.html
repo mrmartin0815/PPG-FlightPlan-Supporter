@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unbebaute Flächen Finder</title>
+    <title>Bebaute Flächen Finder</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <!-- Einfügen von Turf.js -->
@@ -15,15 +15,25 @@
 </head>
 <body>
     <div class="container">
+        <!-- Flexbox Container für die Eingabefelder und den Button -->
         <div class="controls">
-            <label for="start-coordinates">Startpunkt (Lat, Lng):</label>
-            <input type="text" id="start-coordinates" readonly>
-            <br><br>
-            <label for="end-coordinates">Endpunkt (Lat, Lng):</label>
-            <input type="text" id="end-coordinates" readonly>
-            <br><br>
+            <div class="input-container">
+                <label for="start-coordinates">Startpunkt (Lat, Lng):</label>
+                <input type="text" id="start-coordinates" placeholder="Startkoordinaten eingeben">
+            </div>
+            <div class="input-container">
+                <label for="end-coordinates">Endpunkt (Lat, Lng):</label>
+                <input type="text" id="end-coordinates" placeholder="Endkoordinaten eingeben">
+            </div>
+            <div class="input-container">
+                <label for="radius">Radius (in km, nur Startpunkt):</label>
+                <input type="number" id="radius" value="10" min="5" max="100">
+            </div>
+            <!-- Button neben den Eingabefeldern -->
             <button id="search">Berechnung starten</button>
         </div>
+
+        <!-- Karte -->
         <div id="map"></div>
     </div>
     
