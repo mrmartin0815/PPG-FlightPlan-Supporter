@@ -1,5 +1,5 @@
 // Initialisiere die Karte mit einem Defaultpunkt und Zoomlevel
-var map = L.map('map').setView([48.534273854587, 9.443447047669531], 14);
+var map = L.map('map').setView([48.534273854587, 9.443447047669531], 13);
 
 // Mindestfläche in Quadratmetern, unter der Flächen nicht angezeigt werden
 var minArea = 250000;
@@ -115,8 +115,8 @@ map.on('contextmenu', function(e) {
         .setLatLng(e.latlng)
         .setContent(`
             <div>
-                <button id="set-start">Als Startpunkt festlegen</button><br>
-                <button id="set-end">Als Endpunkt festlegen</button>
+                <button id="set-start">Startpunkt festlegen</button><br>
+                <button id="set-end">Endpunkt festlegen</button>
             </div>
         `)
         .openOn(map);
@@ -158,6 +158,8 @@ function findFlächenImUmkreis(lat, lng, radius) {
       way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="railway"];
       way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="cemetery"];
       way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="farmyard"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="vineyard"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="orchard"];
 
       // Start- und Landebahnen hinzufügen
       way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["aeroway"="runway"];
@@ -180,6 +182,8 @@ function findFlächenImUmkreis(lat, lng, radius) {
       relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="railway"];
       relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="cemetery"];
       relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="farmyard"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="vineyard"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="orchard"];
     );
     out body;
     >;
@@ -208,6 +212,10 @@ function findFlächenImUmkreis(lat, lng, radius) {
                         if (landuse === "industrial" || landuse === "commercial" || landuse === "retail" || landuse === "farmyard" || landuse === "military") {
                             return {color: "#cd853f", fillOpacity: 0.5}; // Helleres Dunkelbraun für kommerzielle Gebiete
                         }
+                        // Stil für Weinbau und Obstplantagen
+                        if (landuse === "orchard"|| landuse === "vineyard") {
+                            return {color: "#008B8B", fillOpacity: 0.5};
+                        }
                         // Stil für Campingplätze
                         if (tourism === "camp_site") {
                             return {color: "#8b5a2b", fillOpacity: 0.5}; // Grau für Campingplätze (wie andere Flächen)
@@ -226,7 +234,7 @@ function findFlächenImUmkreis(lat, lng, radius) {
                     var landuse = feature.properties.tags && feature.properties.tags.landuse;
                     var tourism = feature.properties.tags && feature.properties.tags.tourism;
                     // MinArea nur auf nicht besiedelte Flächen anwenden
-                    if (landuse !== "residential" && landuse !== "industrial" && landuse !== "commercial" && landuse !== "retail" && landuse !== "cemetery" && landuse !== "farmyard" && tourism !== "camp_site") {
+                    if (landuse !== "residential" && landuse !== "industrial" && landuse !== "commercial" && landuse !== "retail" && landuse !== "cemetery" && landuse !== "farmyard" && tourism !== "camp_site" && landuse !== "orchard" && landuse !== "vineyard") {
                         if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
                             var area = turf.area(feature); // Fläche in Quadratmetern
                             return area > minArea; // Nur darstellen, wenn die Fläche größer als minArea ist
@@ -275,6 +283,8 @@ function findUnbebauteFlaechen(startLat, startLng, endLat, endLng) {
       way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="railway"];
       way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="cemetery"];
       way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="farmyard"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="vineyard"];
+      way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="orchard"];
 
       // Start- und Landebahnen hinzufügen
       way(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["aeroway"="runway"];
@@ -297,6 +307,8 @@ function findUnbebauteFlaechen(startLat, startLng, endLat, endLng) {
       relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="railway"];
       relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="cemetery"];
       relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="farmyard"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="vineyard"];
+      relation(${bbox.minLat},${bbox.minLng},${bbox.maxLat},${bbox.maxLng})["landuse"="orchard"];
     );
     out body;
     >;
@@ -325,6 +337,10 @@ function findUnbebauteFlaechen(startLat, startLng, endLat, endLng) {
                         if (landuse === "industrial" || landuse === "commercial" || landuse === "retail" || landuse === "farmyard" || landuse === "military") {
                             return {color: "#cd853f", fillOpacity: 0.5}; // Helleres Dunkelbraun für kommerzielle Gebiete
                         }
+                        // Stil für Weinbau und Obstplantagen
+                        if (landuse === "orchard"|| landuse === "vineyard") {
+                            return {color: "#008B8B", fillOpacity: 0.5};
+                        }
                         // Stil für Campingplätze
                         if (tourism === "camp_site") {
                             return {color: "#8b5a2b", fillOpacity: 0.5}; // Grau für Campingplätze (wie andere Flächen)
@@ -343,7 +359,7 @@ function findUnbebauteFlaechen(startLat, startLng, endLat, endLng) {
                     var landuse = feature.properties.tags && feature.properties.tags.landuse;
                     var tourism = feature.properties.tags && feature.properties.tags.tourism;
                     // MinArea nur auf nicht besiedelte Flächen anwenden
-                    if (landuse !== "residential" && landuse !== "industrial" && landuse !== "commercial" && landuse !== "retail" && landuse !== "cemetery" && landuse !== "farmyard" && landuse !== "military" && tourism !== "camp_site") {
+                    if (landuse !== "residential" && landuse !== "industrial" && landuse !== "commercial" && landuse !== "retail" && landuse !== "cemetery" && landuse !== "farmyard" && tourism !== "camp_site" && landuse !== "orchard" && landuse !== "vineyard") {
                         if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
                             var area = turf.area(feature); // Fläche in Quadratmetern
                             return area > minArea; // Nur darstellen, wenn die Fläche größer als minArea ist

@@ -1,96 +1,133 @@
 /* Allgemeine Seiteinstellungen */
 body, html {
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
-    height: 100%; /* Körper und HTML nehmen 100% der Höhe ein */
-    overflow: hidden; /* Verhindert Scrollen */
+    margin: 0; /* Entfernt die Standard-Randabstände von Body und HTML */
+    padding: 0; /* Entfernt das Standard-Padding */
+    font-family: Arial, sans-serif; /* Setzt die Schriftart auf Arial, fallback sans-serif */
+    background-color: #f0f0f0; /* Setzt den Hintergrund auf hellgrau */
+    height: 100%; /* Body und HTML sollen die volle Höhe des Viewports einnehmen */
+    overflow: hidden; /* Verhindert das Scrollen der Seite */
 }
 
 .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100vh; /* Gesamte Höhe des Bildschirms verwenden */
-    padding: 20px;
-    background-color: #ffffff;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box; /* Box-Modell für Padding */
-    overflow: hidden; /* Keine Scrollbalken */
+    display: flex; /* Macht das Container-Element zu einem Flexbox-Container */
+    flex-direction: column; /* Ordnet die Kinder-Elemente des Containers vertikal an */
+    height: 100vh; /* Container füllt die volle Höhe des Viewports aus */
+    padding: 0; /* Kein Padding im Container */
+    box-sizing: border-box; /* Bezieht Padding und Border in die Berechnung der Elementgröße ein */
+    overflow: hidden; /* Verhindert Überlaufen des Inhalts */
 }
 
 /* Flexbox für Eingabefelder und Button */
 .controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    width: 100%;
-    max-width: 800px;
-    max-height: 20%; /* Maximale Höhe der Eingabeelemente */
-    justify-content: center;
-    box-sizing: border-box;
+    display: flex; /* Flexbox-Layout für die Kinder-Elemente von .controls */
+    flex-wrap: wrap; /* Erlaubt den Umbruch der Kinder-Elemente, wenn der Platz nicht ausreicht */
+    gap: 5px; /* 5px Abstand zwischen den Flex-Elementen */
+    padding: 5px; /* 5px Innenabstand um die Eingabefelder und Buttons */
+    width: 100%; /* Controls nehmen 100% der verfügbaren Breite ein */
+    max-width: 400px; /* Maximale Breite des Containers für größere Bildschirme */
+    box-sizing: border-box; /* Padding und Border in die Berechnung der Breite einbeziehen */
+    justify-content: center; /* Zentriert die Flex-Elemente horizontal */
 }
 
 /* Stile für die einzelnen Eingabefelder */
 .input-container {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 250px; /* Flexibles Layout */
-    min-width: 200px; /* Mindestbreite der Felder */
+    display: flex; /* Flexbox-Layout für jedes Eingabefeld-Container */
+    flex-direction: column; /* Kinder-Elemente (Label und Input) werden vertikal angeordnet */
+    flex: 1 1 150px; /* Flexibles Wachstum mit einer Mindestbreite */
+    /*min-width: 150px; /* Eingabefelder haben eine Mindestbreite von 150px */
+    align-items: center; /* Zentriert die Eingabefelder horizontal */
 }
 
 .input-container label {
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 3px; /* 3px Abstand zwischen dem Label und dem Eingabefeld */
+    font-weight: bold; /* Fettgedruckte Labels */
+    font-size: 12px; /* Kleinere Schriftgröße für Labels */
 }
 
 .input-container input {
-    padding: 10px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 100%;
+    padding: 6px; /* 6px Innenabstand im Eingabefeld */
+    font-size: 12px; /* Kleinere Schriftgröße für Eingaben */
+    border: 1px solid #ccc; /* 1px grauer Rahmen um das Eingabefeld */
+    border-radius: 4px; /* Leicht abgerundete Ecken für das Eingabefeld */
+    width: 90%; /* Eingabefeld nimmt 90% der Container-Breite ein */
 }
 
 /* Button Styling */
 button {
-    padding: 10px 20px;
-    background-color: #007bff;
+    padding: 8px 8px; /* 8px vertikales und 15px horizontales Padding */
+    background-color: #007bff; /* Setzt den Hintergrund des Buttons auf Blau */
+    color: #fff; /* Textfarbe im Button ist Weiß */
+    border: none; /* Entfernt den Rahmen um den Button */
+    border-radius: 4px; /* Rundet die Ecken des Buttons ab */
+    cursor: pointer; /* Cursor zeigt auf den Button als interaktives Element */
+    font-size: 14px; /* Schriftgröße des Button-Textes */
+    align-self: center; /* Zentriert den Button innerhalb des Flex-Containers */
+    /*width: 100%; /* Button nimmt die gesamte Breite des übergeordneten Containers ein */
+    min-width: 200;
+}
+
+button:hover {
+    background-color: #0056b3; /* Dunkleres Blau, wenn der Button mit der Maus überfahren wird */
+}
+
+.reset-container {
+    display: flex; /* Flexbox-Layout für jedes Eingabefeld-Container */
+    flex-direction: row; /* Kinder-Elemente (Label und Input) werden horizontal angeordnet */
+    margin-top: 0px; /* Fügt Abstand oberhalb des Reset-Buttons hinzu */
+    text-align: center; /* Zentriert den Reset-Button horizontal */
+}
+
+#reset-button {
+    padding: 8px 15px;
+    background-color: #dc3545; /* Rot für den Reset-Button */
     color: #fff;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
 }
 
-button:hover {
-    background-color: #0056b3;
+#reset-button:hover {
+    background-color: #c82333; /* Dunkleres Rot bei Hover */
 }
 
 /* Karte soll den verbleibenden Platz ausfüllen */
 #map {
-    flex-grow: 1; /* Karte füllt den restlichen Platz im Container */
-    width: 100%; /* Breite der Karte */
-    margin-top: 20px; /* Abstand zu den Eingabefeldern */
-    border: 1px solid #ccc; /* Optionaler Rahmen */
-    height: calc(100vh - 20% - 40px); /* Dynamische Höhe für die Karte, 20% für Eingabefelder */
+    flex-grow: 1; /* Karte wächst, um den verbleibenden Platz im Container auszufüllen */
+    width: 100%; /* Karte nimmt die volle Breite des Containers ein */
+    border: 1px solid #ccc; /* 1px grauer Rahmen um die Karte */
+    height: calc(100vh - 200px); /* Karte nimmt den verbleibenden Platz minus 200px für die Eingabefelder ein */
 }
 
-/* Responsive Anpassung für kleine Bildschirme */
-@media (max-width: 400px) {
+/* Responsive Anpassung für Smartphones */
+@media (max-width: 300px) {
     .controls {
-        flex-direction: column;
-        width: 100%;
-        max-height: 40%; /* Erhöhte max. Höhe der Eingabeelemente auf kleinen Bildschirmen */
+        flex-direction: column; /* Auf kleinen Bildschirmen werden Eingabefelder untereinander angezeigt */
+        gap: 3px; /* 3px Abstand zwischen den Elementen im Container */
+        padding: 5px; /* Weniger Padding auf kleineren Bildschirmen */
+    }
+
+    .input-container {
+        min-width: 100px; /* Kleinere Mindestbreite für Eingabefelder auf kleinen Bildschirmen */
+    }
+
+    .input-container label {
+        font-size: 12px; /* Kleinere Schriftgröße für Labels */
+        margin-bottom: 2px; /* Weniger Abstand zwischen Label und Eingabefeld */
+    }
+
+    .input-container input {
+        font-size: 12px; /* Kleinere Schriftgröße für das Eingabefeld */
+        padding: 4px; /* Weniger Innenabstand im Eingabefeld */
     }
 
     button {
-        width: 100%;
-        margin-top: 15px;
+        font-size: 12px; /* Kleinere Schriftgröße für den Button auf kleinen Bildschirmen */
+        padding: 6px 10px; /* Weniger Padding im Button auf kleineren Bildschirmen */
+        margin-top: 5px; /* 5px Abstand über dem Button */
     }
 
     #map {
-        height: calc(100vh - 30% - 40px); /* Weniger Platz für die Karte auf kleinen Bildschirmen */
+        height: calc(100vh - 220px); /* Weniger Platz für die Karte, um Platz für größere Eingabefelder zu schaffen */
     }
 }
