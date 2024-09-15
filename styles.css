@@ -1,133 +1,167 @@
-/* Allgemeine Seiteinstellungen */
-body, html {
-    margin: 0; /* Entfernt die Standard-Randabstände von Body und HTML */
-    padding: 0; /* Entfernt das Standard-Padding */
-    font-family: Arial, sans-serif; /* Setzt die Schriftart auf Arial, fallback sans-serif */
-    background-color: #f0f0f0; /* Setzt den Hintergrund auf hellgrau */
-    height: 100%; /* Body und HTML sollen die volle Höhe des Viewports einnehmen */
-    overflow: hidden; /* Verhindert das Scrollen der Seite */
+html, body, #map {
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
-.container {
-    display: flex; /* Macht das Container-Element zu einem Flexbox-Container */
-    flex-direction: column; /* Ordnet die Kinder-Elemente des Containers vertikal an */
-    height: 100vh; /* Container füllt die volle Höhe des Viewports aus */
-    padding: 0; /* Kein Padding im Container */
-    box-sizing: border-box; /* Bezieht Padding und Border in die Berechnung der Elementgröße ein */
-    overflow: hidden; /* Verhindert Überlaufen des Inhalts */
+#map {
+    width: 100%;
+    height: 100%;
 }
 
-/* Flexbox für Eingabefelder und Button */
-.controls {
-    display: flex; /* Flexbox-Layout für die Kinder-Elemente von .controls */
-    flex-wrap: wrap; /* Erlaubt den Umbruch der Kinder-Elemente, wenn der Platz nicht ausreicht */
-    gap: 5px; /* 5px Abstand zwischen den Flex-Elementen */
-    padding: 5px; /* 5px Innenabstand um die Eingabefelder und Buttons */
-    width: 100%; /* Controls nehmen 100% der verfügbaren Breite ein */
-    max-width: 400px; /* Maximale Breite des Containers für größere Bildschirme */
-    box-sizing: border-box; /* Padding und Border in die Berechnung der Breite einbeziehen */
-    justify-content: center; /* Zentriert die Flex-Elemente horizontal */
-}
-
-/* Stile für die einzelnen Eingabefelder */
-.input-container {
-    display: flex; /* Flexbox-Layout für jedes Eingabefeld-Container */
-    flex-direction: column; /* Kinder-Elemente (Label und Input) werden vertikal angeordnet */
-    flex: 1 1 150px; /* Flexibles Wachstum mit einer Mindestbreite */
-    /*min-width: 150px; /* Eingabefelder haben eine Mindestbreite von 150px */
-    align-items: center; /* Zentriert die Eingabefelder horizontal */
-}
-
-.input-container label {
-    margin-bottom: 3px; /* 3px Abstand zwischen dem Label und dem Eingabefeld */
-    font-weight: bold; /* Fettgedruckte Labels */
-    font-size: 12px; /* Kleinere Schriftgröße für Labels */
-}
-
-.input-container input {
-    padding: 6px; /* 6px Innenabstand im Eingabefeld */
-    font-size: 12px; /* Kleinere Schriftgröße für Eingaben */
-    border: 1px solid #ccc; /* 1px grauer Rahmen um das Eingabefeld */
-    border-radius: 4px; /* Leicht abgerundete Ecken für das Eingabefeld */
-    width: 90%; /* Eingabefeld nimmt 90% der Container-Breite ein */
-}
-
-/* Button Styling */
-button {
-    padding: 8px 8px; /* 8px vertikales und 15px horizontales Padding */
-    background-color: #007bff; /* Setzt den Hintergrund des Buttons auf Blau */
-    color: #fff; /* Textfarbe im Button ist Weiß */
-    border: none; /* Entfernt den Rahmen um den Button */
-    border-radius: 4px; /* Rundet die Ecken des Buttons ab */
-    cursor: pointer; /* Cursor zeigt auf den Button als interaktives Element */
-    font-size: 14px; /* Schriftgröße des Button-Textes */
-    align-self: center; /* Zentriert den Button innerhalb des Flex-Containers */
-    /*width: 100%; /* Button nimmt die gesamte Breite des übergeordneten Containers ein */
-    min-width: 200;
-}
-
-button:hover {
-    background-color: #0056b3; /* Dunkleres Blau, wenn der Button mit der Maus überfahren wird */
-}
-
-.reset-container {
-    display: flex; /* Flexbox-Layout für jedes Eingabefeld-Container */
-    flex-direction: row; /* Kinder-Elemente (Label und Input) werden horizontal angeordnet */
-    margin-top: 0px; /* Fügt Abstand oberhalb des Reset-Buttons hinzu */
-    text-align: center; /* Zentriert den Reset-Button horizontal */
-}
-
+/* Stil für die Buttons */
+#gpx-button,
+#calculate-button,
 #reset-button {
-    padding: 8px 15px;
-    background-color: #dc3545; /* Rot für den Reset-Button */
-    color: #fff;
-    border: none;
-    border-radius: 4px;
+    position: absolute;
+    bottom: 20px;
+    z-index: 1000;
+    padding: 10px 15px;
+    font-size: 16px;
+    background-color: #fff;
+    border: 1px solid #555;
+    border-radius: 5px;
     cursor: pointer;
+}
+
+/* Stil für die Routenlänge */
+#route-length {
+    position: absolute;
+    bottom: 80px;
+    z-index: 1000;
+    right: 20px;
+    background-color: white;
+    border: 1px solid #555;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+/* Positionierung der Buttons */
+#reset-button {
+    left: 20px; /* Platzieren Sie den "Reset"-Button links unten */
+}
+
+#calculate-button {
+    right: 105px; /* Platzieren Sie den "berechnen"-Button links neben dem "gpx"-Button */
+}
+
+#gpx-button {
+    right: 20px;
+}
+
+/* Hover-Effekt für die Buttons */
+#gpx-button:hover,
+#calculate-button:hover,
+#reset-button:hover {
+    background-color: #f0f0f0;
+}
+
+/* Leaflet Control (Layer-Auswahl) anpassen */
+.leaflet-control-layers {
     font-size: 14px;
 }
 
-#reset-button:hover {
-    background-color: #c82333; /* Dunkleres Rot bei Hover */
+/* Anpassung der Leaflet-Controls */
+.leaflet-container .leaflet-control {
+    font-size: 14px;
 }
 
-/* Karte soll den verbleibenden Platz ausfüllen */
-#map {
-    flex-grow: 1; /* Karte wächst, um den verbleibenden Platz im Container auszufüllen */
-    width: 100%; /* Karte nimmt die volle Breite des Containers ein */
-    border: 1px solid #ccc; /* 1px grauer Rahmen um die Karte */
-    height: calc(100vh - 200px); /* Karte nimmt den verbleibenden Platz minus 200px für die Eingabefelder ein */
+/* Anpassung der Schriftgröße des Attributionstextes */
+.leaflet-container .leaflet-control-attribution {
+    font-size: 12px; /* Passen Sie den Wert nach Bedarf an */
+}
+/* Anpassung der Schriftgröße der Links innerhalb des Attributionstextes */
+.leaflet-container .leaflet-control-attribution a {
+    font-size: 12px;
 }
 
-/* Responsive Anpassung für Smartphones */
-@media (max-width: 300px) {
-    .controls {
-        flex-direction: column; /* Auf kleinen Bildschirmen werden Eingabefelder untereinander angezeigt */
-        gap: 3px; /* 3px Abstand zwischen den Elementen im Container */
-        padding: 5px; /* Weniger Padding auf kleineren Bildschirmen */
+/* Dialog-Stil */
+#export-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#export-dialog-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+#export-dialog-content p {
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+#export-dialog-content button {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+}
+
+/* Angepasste .hidden Klasse mit höherer Spezifität */
+#export-dialog.hidden {
+    display: none;
+}
+
+/* Medienabfragen für mobile Geräte */
+@media only screen and (max-width: 768px) {
+    /* Größere Schrift für die Buttons */
+    #gpx-button,
+    #calculate-button,
+    #reset-button {
+        padding: 15px 20px;
+        font-size: 18px;
     }
 
-    .input-container {
-        min-width: 100px; /* Kleinere Mindestbreite für Eingabefelder auf kleinen Bildschirmen */
+    /* Größere Schrift für die Layer-Kontrolle */
+    .leaflet-control-layers {
+        font-size: 18px;
     }
 
-    .input-container label {
-        font-size: 12px; /* Kleinere Schriftgröße für Labels */
-        margin-bottom: 2px; /* Weniger Abstand zwischen Label und Eingabefeld */
+    /* Größere Icons und Schrift auf der Karte */
+    .leaflet-container .leaflet-control {
+        font-size: 18px;
     }
 
-    .input-container input {
-        font-size: 12px; /* Kleinere Schriftgröße für das Eingabefeld */
-        padding: 4px; /* Weniger Innenabstand im Eingabefeld */
+    /* Anpassung der Popup-Schriftgröße (falls verwendet) */
+    .leaflet-popup-content {
+        font-size: 18px;
     }
 
-    button {
-        font-size: 12px; /* Kleinere Schriftgröße für den Button auf kleinen Bildschirmen */
-        padding: 6px 10px; /* Weniger Padding im Button auf kleineren Bildschirmen */
-        margin-top: 5px; /* 5px Abstand über dem Button */
+    /* Anpassung der Schriftgröße des Attributionstextes */
+    .leaflet-container .leaflet-control-attribution {
+        font-size: 10px; /* Passen Sie den Wert nach Bedarf an */
+    }
+    
+    /* Anpassung der Schriftgröße der Links innerhalb des Attributionstextes */
+    .leaflet-container .leaflet-control-attribution a {
+        font-size: 10px;
     }
 
-    #map {
-        height: calc(100vh - 220px); /* Weniger Platz für die Karte, um Platz für größere Eingabefelder zu schaffen */
+    /* Größere Schrift im Dialog */
+    #gpx-dialog-content p {
+        font-size: 20px;
+    }
+
+    /* Größere Schrift im Dialog */
+    #gpx-dialog-content button {
+        font-size: 18px;
     }
 }
+
+/* Anpassung für den Maßstab */
+.leaflet-control-scale {
+    position: absolute;
+    top: 60px;
+}
+

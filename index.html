@@ -2,50 +2,48 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PPG Bebaute Flächen Finder</title>
+    <title>Kartenanwendung</title>
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <!-- Einfügen von Turf.js -->
-	<script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
-    <!-- Leaflet.GeometryUtil -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.geometryutil/0.9.3/leaflet.geometryutil.min.js"></script>
-    <!-- Eigene Styles -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Eigene CSS -->
     <link rel="stylesheet" href="styles.css">
+    <!-- Meta-Viewport für mobile Geräte -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <div class="container">
-        <!-- Flexbox Container für die Eingabefelder und den Button -->
-        <div class="controls">
-            <div class="input-container">
-                <label for="start-coordinates">Startpunkt (Lat, Lng):</label>
-                <input type="text" id="start-coordinates" placeholder="Startkoordinaten eingeben">
-            </div>
-            <div class="input-container">
-                <label for="end-coordinates">Endpunkt (Lat, Lng):</label>
-                <input type="text" id="end-coordinates" placeholder="Endkoordinaten eingeben">
-            </div>
-            <div class="input-container">
-                <label for="radius">Radius:</label>
-                <div style="display: flex; align-items: center;">
-                    <input type="range" id="radius" value="10" min="5" max="100" oninput="document.getElementById('radius-value').textContent = this.value">
-                    <span id="radius-value" style="margin-left: 10px;">10</span> km
-                </div>
-            </div>
-            <div class="reset-container">
-                <button id="reset-button" onclick="window.location.reload();">Reset</button>
-                <!-- Button neben den Eingabefeldern -->
-                <button id="search">Berechnung starten</button>
-            </div>
+    <div id="map"></div>
+    <!-- GPX-Button -->
+    <button id="gpx-button">GPX</button>
+    <!-- Berechnen-Button -->
+    <button id="calculate-button">Berechnen</button>
+    <!-- Reset-Button -->
+    <button id="reset-button">Reset</button>
+    <!-- Dialog für GPX-Typ-Auswahl -->
+    <div id="export-dialog" class="hidden">
+        <div id="export-dialog-content">
+            <p>Bitte wählen Sie das Exportformat aus:</p>
+            <button id="gpx-route">GPX Route</button>
+            <button id="gpx-track">GPX Track</button>
+            <button id="gpx-waypoints">GPX Wegpunkte</button>
+            <button id="xctsk-export">XCTrack Task</button>
+            <button id="export-cancel">Abbrechen</button>
         </div>
-        <!-- Karte -->
-        <div id="map"></div>
     </div>
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <!-- osmtogeojson Bibliothek -->
+    <!-- Anzeige für die Routenlänge -->
+    <div id="route-length"></div>
+
+    <!-- Skripte am Ende des Body-Bereichs -->
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Esri Leaflet Plugin für zusätzliche Layer -->
+    <script src="https://unpkg.com/esri-leaflet"></script>
+    <!-- OSM to GeoJSON Converter -->
     <script src="https://unpkg.com/osmtogeojson@2.2.12/osmtogeojson.js"></script>
-    <!-- Eigene Scripts -->
+    <!-- Turf.js Bibliothek -->
+    <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+    <!-- Leaflet GeometryUtil Bibliothek -->
+    <script src="https://unpkg.com/leaflet-geometryutil"></script>
+    <!-- Ihr eigenes Skript -->
     <script src="script.js"></script>
 </body>
 </html>
