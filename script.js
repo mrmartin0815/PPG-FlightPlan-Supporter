@@ -326,13 +326,16 @@ function fetchOverpassData() {
     var maxLat = bbox[3];
     var maxLng = bbox[2];
 
-    // Overpass-API-Abfrage erstellen (optimiert: ohne riesige Relation-Polygonen, um RAM-Limits zu vermeiden)
+    // Overpass-API-Abfrage erstellen (inkl. Relationen für Multipolygone wie Wälder und Wohngebiete)
     var query = `[out:json][timeout:25];
 (
   way(${minLat},${minLng},${maxLat},${maxLng})["landuse"~"residential|industrial|commercial|forest|retail|military|railway|cemetery|farmyard|vineyard|orchard"];
   way(${minLat},${minLng},${maxLat},${maxLng})["natural"="wood"];
+  relation(${minLat},${minLng},${maxLat},${maxLng})["landuse"~"residential|industrial|commercial|forest|retail|military|railway|cemetery|farmyard|vineyard|orchard"];
+  relation(${minLat},${minLng},${maxLat},${maxLng})["natural"="wood"];
   way(${minLat},${minLng},${maxLat},${maxLng})["aeroway"="runway"];
   way(${minLat},${minLng},${maxLat},${maxLng})["tourism"="camp_site"];
+  relation(${minLat},${minLng},${maxLat},${maxLng})["tourism"="camp_site"];
   node(${minLat},${minLng},${maxLat},${maxLng})["generator:source"="wind"];
   node(${minLat},${minLng},${maxLat},${maxLng})["man_made"="tower"];
 );
@@ -435,9 +438,11 @@ out skel qt;`;
                 },
                 // Filter für die Anzeige der Flächen
                 filter: function(feature) {
-                    var minAreaBig = 300000; // Mindestfläche für die Anzeige der Flächen in qm
-                    var minAreaSmall = 15000; // Mindestfläche für die Anzeige der kleinen Flächen in qm
+                    var minAreaBig = 300000; // Mindestfläche für sonstige Flächen in qm
+                    var minAreaSmall = 15000; // Mindestfläche für Siedlungen, Gewerbe etc. in qm (1,5 ha)
+                    var minAreaForest = 20000; // Mindestfläche für Waldflächen in qm (2 ha)
                     var landuse = feature.properties.tags && feature.properties.tags.landuse;
+                    var natural = feature.properties.tags && feature.properties.tags.natural;
                     var tourism = feature.properties.tags && feature.properties.tags.tourism;
                     var featureType = feature.geometry.type;
                     // Überprüfen, ob das Feature eine Fläche ist (Boolean)
@@ -449,6 +454,13 @@ out skel qt;`;
                     // Ansonsten, wenn es eine Fläche ist:
                     if (isArea) {
                         var area = turf.area(feature); // Fläche in Quadratmetern ermitteln
+
+                        // Waldflächen (landuse=forest oder natural=wood) ab minAreaForest anzeigen
+                        var isForest = landuse === "forest" || natural === "wood";
+                        if (isForest) {
+                            return area > minAreaForest;
+                        }
+
                         // Liste der Landuse-Typen, die ab minAreaSmall angezeigt werden
                         var showTypeSmall = [
                             "residential",
