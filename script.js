@@ -267,31 +267,8 @@ function downloadGPX(gpxData, filename) {
     URL.revokeObjectURL(url);
 }
 
-// Hilfsfunktion zur Anzeige von Status-Meldungen
-function showStatus(message, isError, timeoutMs) {
-    var statusEl = document.getElementById('status-message');
-    if (!statusEl) return;
-    
-    statusEl.textContent = message;
-    statusEl.className = isError ? 'error' : 'success';
-    
-    if (timeoutMs) {
-        setTimeout(function() {
-            if (statusEl.textContent === message) {
-                statusEl.className = 'hidden';
-            }
-        }, timeoutMs);
-    }
-}
-
 // Funktion zum Abrufen der Overpass-Daten
 function fetchOverpassData() {
-    var calculateBtn = document.getElementById('calculate-button');
-    if (calculateBtn) {
-        calculateBtn.disabled = true;
-        calculateBtn.textContent = 'Lädt...';
-    }
-
     // Existierende Overpass-Layer entfernen
     if (overpassLayer) {
         map.removeLayer(overpassLayer);
@@ -307,13 +284,13 @@ function fetchOverpassData() {
 
     if (markers.length === 0) { // Keine Marker vorhanden
         var center = map.getCenter();
-        bufferDistance = 3000; // 3 km Puffer um Kartenzentrum
+        bufferDistance = 25000; // 25 km
         bufferedArea = turf.buffer(turf.point([center.lng, center.lat]), bufferDistance, {units: 'meters'});
     } else if (markers.length === 1) { // Ein Marker vorhanden
-        bufferDistance = 4000; // 4 km Puffer um den Marker
+        bufferDistance = 25000; // 25 km
         bufferedArea = turf.buffer(turf.point([latlngs[0].lng, latlngs[0].lat]), bufferDistance, {units: 'meters'});
     } else { // Mehrere Marker vorhanden
-        bufferDistance = 3000; // 3 km Korridor entlang der Flugroute
+        bufferDistance = 10000; // 10 km
         var line = turf.lineString(latlngs.map(function(latlng) { return [latlng.lng, latlng.lat]; }));
         bufferedArea = turf.buffer(line, bufferDistance, {units: 'meters'});
     }
@@ -326,76 +303,34 @@ function fetchOverpassData() {
     var maxLat = bbox[3];
     var maxLng = bbox[2];
 
-    // Overpass-API-Abfrage erstellen (optimiert: ohne riesige Relation-Polygonen, um RAM-Limits zu vermeiden)
-    var query = `[out:json][timeout:25];
-(
-  way(${minLat},${minLng},${maxLat},${maxLng})["landuse"~"residential|industrial|commercial|forest|retail|military|railway|cemetery|farmyard|vineyard|orchard"];
-  way(${minLat},${minLng},${maxLat},${maxLng})["natural"="wood"];
-  way(${minLat},${minLng},${maxLat},${maxLng})["aeroway"="runway"];
-  way(${minLat},${minLng},${maxLat},${maxLng})["tourism"="camp_site"];
-  node(${minLat},${minLng},${maxLat},${maxLng})["generator:source"="wind"];
-  node(${minLat},${minLng},${maxLat},${maxLng})["man_made"="tower"];
-);
-out body;
->;
-out skel qt;`;
+    // Overpass-API-Abfrage erstellen
+    var query = `
+        [out:json];
+        (
+          way(${minLat},${minLng},${maxLat},${maxLng})["landuse"~"residential|industrial|commercial|forest|retail|military|railway|cemetery|farmyard|vineyard|orchard"];
+          way(${minLat},${minLng},${maxLat},${maxLng})["natural"="wood"];
+          way(${minLat},${minLng},${maxLat},${maxLng})["aeroway"="runway"];
+          way(${minLat},${minLng},${maxLat},${maxLng})["tourism"="camp_site"];
+          relation(${minLat},${minLng},${maxLat},${maxLng})["landuse"~"residential|industrial|commercial|forest|retail|military|railway|cemetery|farmyard|vineyard|orchard"];
+          relation(${minLat},${minLng},${maxLat},${maxLng})["natural"="wood"];
+          relation(${minLat},${minLng},${maxLat},${maxLng})["tourism"="camp_site"];
+          node(${minLat},${minLng},${maxLat},${maxLng})["generator:source"="wind"];
+          node(${minLat},${minLng},${maxLat},${maxLng})["man_made"="tower"];
+        );
+        out body;
+        >;
+        out skel qt;
+    `;
 
-    // Overpass-API-Server für Redundanz/Fallback
-    var endpoints = [
-        'https://overpass-api.de/api/interpreter',
-        'https://lz4.overpass-api.de/api/interpreter',
-        'https://z.overpass-api.de/api/interpreter',
-        'https://overpass.kumi.systems/api/interpreter',
-        'https://overpass.private.coffee/api/interpreter'
-    ];
-
-    showStatus('Overpass-Daten werden geladen...', false, 0);
-
-    // Newlines entfernen, um Apache 406-Fehler zu vermeiden
-    var cleanQuery = query.replace(/[\r\n]+/g, '').trim();
-
-    // Rekursive Funktion zum Versuchen verschiedener Overpass-Endpoints mit 20s Timeout
-    function fetchFromEndpoint(index) {
-        if (index >= endpoints.length) {
-            return Promise.reject(new Error('Kein Overpass-API-Server erreichbar. Bitte prüfen Sie Ihre Internetverbindung.'));
-        }
-
-        var currentUrl = endpoints[index];
-        showStatus('Lade Geländedaten (Server ' + (index + 1) + '/' + endpoints.length + ')...', false, 0);
-
-        var controller = new AbortController();
-        var timeoutId = setTimeout(function() {
-            controller.abort();
-        }, 20000);
-
-
-        return fetch(currentUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'data=' + encodeURIComponent(cleanQuery),
-            signal: controller.signal
-        }).then(function(response) {
-            clearTimeout(timeoutId);
-            if (!response.ok) {
-                console.warn('Overpass Endpoint ' + currentUrl + ' lieferte Status ' + response.status + ', versuche nächsten...');
-                return fetchFromEndpoint(index + 1);
-            }
-            return response.json();
-        }).catch(function(err) {
-            clearTimeout(timeoutId);
-            if (err.name === 'AbortError') {
-                console.warn('Overpass Endpoint ' + currentUrl + ' hat nach 20s nicht geantwortet (Timeout), versuche nächsten...');
-            } else {
-                console.warn('Fehler bei Overpass Endpoint ' + currentUrl + ':', err);
-            }
-            return fetchFromEndpoint(index + 1);
-        });
-    }
+    // URL erstellen
+    var url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
 
     // Daten abrufen
-    fetchFromEndpoint(0)
+    fetch(url)
+        .then(function(response) {
+            // Daten in JSON umwandeln
+            return response.json();
+        })
         .then(function(data) {
             // Daten in GeoJSON umwandeln
             var geojson = osmtogeojson(data);
@@ -485,21 +420,11 @@ out skel qt;`;
 
             // Polyline wieder hinzufügen, damit sie über dem Overpass-Layer liegt
             polyline.addTo(map);
-
-            var count = data && data.elements ? data.elements.length : 0;
-            showStatus('Geländedaten geladen (' + count + ' Objekte)!', false, 4000);
         })
         .catch(function(error) {
             console.error('Fehler bei der Overpass-API-Abfrage:', error);
             // Bei einem Fehler die Polyline trotzdem wieder hinzufügen
             polyline.addTo(map);
-            showStatus('Fehler: Overpass-Server nicht erreichbar. Bitte später erneut versuchen.', true, 6000);
-        })
-        .finally(function() {
-            if (calculateBtn) {
-                calculateBtn.disabled = false;
-                calculateBtn.textContent = 'Berechnen';
-            }
         });
 }
 
@@ -550,54 +475,26 @@ markers.forEach(function(marker) {
 function sortMarkersAlongPolyline() {
     var latlngs = polyline.getLatLngs();
 
-    // Wenn weniger als 2 Punkte vorhanden sind, gibt es nichts zu sortieren
-    if (latlngs.length < 2) return;
-
-    // Für jeden Marker den Index des nächsten Segments bestimmen.
-    // Das ist O(markers × segments) ohne teure Objekt-Erzeugung.
+    // Liste der Marker mit ihren Positionen entlang der Polyline
     var markerPositions = markers.map(function(marker) {
         var latlng = marker.getLatLng();
-        var bestSegIndex = 0;
-        var bestDist = Infinity;
-
-        for (var i = 0; i < latlngs.length - 1; i++) {
-            var p1 = latlngs[i];
-            var p2 = latlngs[i + 1];
-            // Quadratische Annäherung im lat/lng-Raum (ausreichend für Sortierzwecke)
-            var dist = pointToSegmentDistSq(latlng, p1, p2);
-            if (dist < bestDist) {
-                bestDist = dist;
-                bestSegIndex = i;
-            }
-        }
-
-        return { marker: marker, segIndex: bestSegIndex };
+        var closestPoint = L.GeometryUtil.closest(map, polyline, latlng);
+        var distance = L.GeometryUtil.length(L.polyline([polyline.getLatLngs()[0], closestPoint]));
+        return {
+            marker: marker,
+            distance: distance
+        };
     });
 
-    // Marker nach Segment-Index sortieren (stabile Reihenfolge bei gleichen Indizes)
+    // Marker nach ihrer Position entlang der Polyline sortieren
     markerPositions.sort(function(a, b) {
-        return a.segIndex - b.segIndex;
+        return a.distance - b.distance;
     });
 
     // Aktualisierte Marker-Liste
-    markers = markerPositions.map(function(item) { return item.marker; });
-}
-
-// Hilfsfunktion: quadratischer Abstand eines Punktes zu einem Liniensegment (lat/lng-Raum)
-function pointToSegmentDistSq(p, a, b) {
-    var dx = b.lng - a.lng;
-    var dy = b.lat - a.lat;
-    var lenSq = dx * dx + dy * dy;
-    var t = 0;
-    if (lenSq > 0) {
-        t = ((p.lng - a.lng) * dx + (p.lat - a.lat) * dy) / lenSq;
-        t = Math.max(0, Math.min(1, t));
-    }
-    var nearLng = a.lng + t * dx;
-    var nearLat = a.lat + t * dy;
-    var ex = p.lng - nearLng;
-    var ey = p.lat - nearLat;
-    return ex * ex + ey * ey;
+    markers = markerPositions.map(function(item) {
+        return item.marker;
+    });
 }
 
 // Funktion zur Berechnung der Routenlänge
