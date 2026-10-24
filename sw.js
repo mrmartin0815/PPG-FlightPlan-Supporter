@@ -2,12 +2,12 @@
 // Strategie: App-Dateien "network first" (Updates kommen sofort an, offline gibt es die letzte Version),
 // Bibliotheken vom CDN "cache first" (versionsgenau, ändern sich nie).
 // Overpass-Abfragen (POST) und Kartenkacheln werden bewusst nicht angefasst.
-var CACHE = 'ppg-flightplan-v2';
+var CACHE = 'ppg-flightplan-v3';
 
 var APP_FILES = [
     './',
     'index.html',
-    'script.js?v=3',
+    'script.js?v=4',
     'styles.css',
     'manifest.webmanifest',
     'icons/icon-192.png',
@@ -17,10 +17,8 @@ var APP_FILES = [
 var CDN_FILES = [
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-    'https://unpkg.com/esri-leaflet@3.0.19/dist/esri-leaflet.js',
     'https://unpkg.com/osmtogeojson@2.2.12/osmtogeojson.js',
-    'https://unpkg.com/@turf/turf@6.5.0/turf.min.js',
-    'https://unpkg.com/leaflet-geometryutil@0.11.0/src/leaflet.geometryutil.js'
+    'https://unpkg.com/@turf/turf@6.5.0/turf.min.js'
 ];
 
 self.addEventListener('install', function(event) {

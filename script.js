@@ -535,23 +535,21 @@ out geom qt;`;
         });
 }
 
-// Hinzufügen des Ereignislisteners für Desktop und Mobilgeräte
+// Ereignislistener für Desktop und Mobilgeräte (ein Tippen löst auf Touch-Geräten ebenfalls "click" aus;
+// "touchstart" würde schon beim Verschieben der Karte über der Linie einen Punkt setzen)
 polyline.on('click', onPolylineClick);
-polyline.on('touchstart', onPolylineClick);
 
 // Ereignislistener für Klicks auf die Polyline zum Hinzufügen neuer Punkte
 function onPolylineClick(e) {
     // Neuen Marker an der Klickposition hinzufügen
     var marker = L.marker(e.latlng, { draggable: true }).addTo(map);
 
-    // Marker in die Liste einfügen
-    markers.push(marker);
+    // Marker direkt hinter dem Startpunkt des angeklickten Segments einfügen
+    var segIndex = findNearestSegmentIndex(e.latlng);
+    markers.splice(segIndex + 1, 0, marker);
 
     // Ereignislistener zum Marker hinzufügen
     addMarkerEventListeners(marker);
-
-    // Marker entlang der Polyline sortieren
-    sortMarkersAlongPolyline();
 
     // Polyline aktualisieren
     updatePolyline();
@@ -578,58 +576,24 @@ markers.forEach(function(marker) {
     addMarkerEventListeners(marker);
 });
 
-// Funktion zum Sortieren der Marker entlang der Polyline
-function sortMarkersAlongPolyline() {
-    var latlngs = polyline.getLatLngs();
+// Index des Routensegments (Marker i -> i+1), das dem Punkt am nächsten liegt.
+// Gerechnet wird in Bildschirm-Pixeln, damit Längen- und Breitengrade gleich gewichtet sind.
+function findNearestSegmentIndex(latlng) {
+    var p = map.latLngToLayerPoint(latlng);
+    var bestSegIndex = 0;
+    var bestDist = Infinity;
 
-    // Wenn weniger als 2 Punkte vorhanden sind, gibt es nichts zu sortieren
-    if (latlngs.length < 2) return;
-
-    // Für jeden Marker den Index des nächsten Segments bestimmen.
-    // Das ist O(markers × segments) ohne teure Objekt-Erzeugung.
-    var markerPositions = markers.map(function(marker) {
-        var latlng = marker.getLatLng();
-        var bestSegIndex = 0;
-        var bestDist = Infinity;
-
-        for (var i = 0; i < latlngs.length - 1; i++) {
-            var p1 = latlngs[i];
-            var p2 = latlngs[i + 1];
-            // Quadratische Annäherung im lat/lng-Raum (ausreichend für Sortierzwecke)
-            var dist = pointToSegmentDistSq(latlng, p1, p2);
-            if (dist < bestDist) {
-                bestDist = dist;
-                bestSegIndex = i;
-            }
+    for (var i = 0; i < markers.length - 1; i++) {
+        var a = map.latLngToLayerPoint(markers[i].getLatLng());
+        var b = map.latLngToLayerPoint(markers[i + 1].getLatLng());
+        var dist = L.LineUtil.pointToSegmentDistance(p, a, b);
+        if (dist < bestDist) {
+            bestDist = dist;
+            bestSegIndex = i;
         }
-
-        return { marker: marker, segIndex: bestSegIndex };
-    });
-
-    // Marker nach Segment-Index sortieren (stabile Reihenfolge bei gleichen Indizes)
-    markerPositions.sort(function(a, b) {
-        return a.segIndex - b.segIndex;
-    });
-
-    // Aktualisierte Marker-Liste
-    markers = markerPositions.map(function(item) { return item.marker; });
-}
-
-// Hilfsfunktion: quadratischer Abstand eines Punktes zu einem Liniensegment (lat/lng-Raum)
-function pointToSegmentDistSq(p, a, b) {
-    var dx = b.lng - a.lng;
-    var dy = b.lat - a.lat;
-    var lenSq = dx * dx + dy * dy;
-    var t = 0;
-    if (lenSq > 0) {
-        t = ((p.lng - a.lng) * dx + (p.lat - a.lat) * dy) / lenSq;
-        t = Math.max(0, Math.min(1, t));
     }
-    var nearLng = a.lng + t * dx;
-    var nearLat = a.lat + t * dy;
-    var ex = p.lng - nearLng;
-    var ey = p.lat - nearLat;
-    return ex * ex + ey * ey;
+
+    return bestSegIndex;
 }
 
 // Funktion zur Berechnung der Routenlänge
