@@ -112,6 +112,8 @@ Die App selbst wird zwischengespeichert; für Karten und Geländedaten ist weite
 | `styles.css` | Layout und Darstellung, inkl. Mobile-Anpassungen |
 | `manifest.webmanifest`, `sw.js`, `icons/` | PWA: App-Name, Icons, Offline-Cache |
 | `start.bat` | Optionaler lokaler Webserver für Windows |
+| `TODO.md` | Offene Aufgaben und Ideen |
+| `LICENSE` | MIT-Lizenz |
 
 > **Für Änderungen:** Nach Änderungen an `script.js` die Versionsnummer `script.js?v=…` in `index.html` **und** `sw.js` hochzählen und in `sw.js` den Namen `CACHE` erhöhen – sonst laden Browser und installierte App weiter die alte Version.
 
@@ -119,6 +121,6 @@ Die App selbst wird zwischengespeichert; für Karten und Geländedaten ist weite
 
 ## 📜 Lizenz
 
-Dieses Projekt steht unter der MIT-Lizenz. Freie Nutzung und Anpassung für alle Pilotinnen und Piloten.
+Dieses Projekt steht unter der [MIT-Lizenz](LICENSE). Freie Nutzung und Anpassung für alle Pilotinnen und Piloten.
 
 *Flieg vorsichtig und hab eine gute Landung! 🪂*
