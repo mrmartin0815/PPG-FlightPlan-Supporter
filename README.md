@@ -43,8 +43,11 @@ Es ist keine Installation oder ein Backend-Server erforderlich. Das Tool läuft 
    ```bash
    git clone https://github.com/Ihr-Nutzername/PPG-FlightPlanHelper.git
    ```
-2. Öffne die Datei [`index.html`](file:///d:/Cloud/Dropbox/Repo/PPG-FlightPlanHelper/index.html) in einem beliebigen modernen Browser (Chrome, Firefox, Safari, Edge).
-3. Alternativ kann die Seite direkt über **GitHub Pages** gehostet und genutzt werden.
+2. Öffne die Datei [`index.html`](index.html) per Doppelklick in einem beliebigen modernen Browser (Chrome, Firefox, Safari, Edge). Ein lokaler Webserver ist nicht nötig.
+3. Alternativ kann die Seite direkt über **GitHub Pages** gehostet und genutzt werden – praktisch für die Nutzung auf dem Smartphone.
+4. Optional: [`start.bat`](start.bat) startet einen lokalen Webserver (benötigt Python) und öffnet die App unter `http://localhost:8080`.
+
+> **Hinweis:** Die Geländedaten kommen von den öffentlichen Overpass-Servern, die häufig stark ausgelastet sind. Eine Abfrage kann daher 30–60 Sekunden dauern; die App probiert bei Überlastung automatisch mehrere Server und wiederholt die Anfrage.
 
 ---
 

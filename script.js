@@ -326,51 +326,67 @@ function fetchOverpassData() {
     var maxLat = bbox[3];
     var maxLng = bbox[2];
 
-    // Overpass-API-Abfrage erstellen (inkl. Relationen für Multipolygone wie Wälder und Wohngebiete)
-    var query = `[out:json][timeout:25];
+    // Overpass-API-Abfrage erstellen (inkl. Relationen für Multipolygone wie Wälder und Wohngebiete).
+    // Globale bbox + "out geom" liefert die Geometrie direkt mit, statt alle Knoten einzeln
+    // per ">; out skel" nachzuladen – deutlich weniger Last für die (oft überlasteten) Server.
+    var query = `[out:json][timeout:60][bbox:${minLat},${minLng},${maxLat},${maxLng}];
 (
-  way(${minLat},${minLng},${maxLat},${maxLng})["landuse"~"residential|industrial|commercial|forest|retail|military|railway|cemetery|farmyard|vineyard|orchard"];
-  way(${minLat},${minLng},${maxLat},${maxLng})["natural"="wood"];
-  relation(${minLat},${minLng},${maxLat},${maxLng})["landuse"~"residential|industrial|commercial|forest|retail|military|railway|cemetery|farmyard|vineyard|orchard"];
-  relation(${minLat},${minLng},${maxLat},${maxLng})["natural"="wood"];
-  way(${minLat},${minLng},${maxLat},${maxLng})["aeroway"="runway"];
-  way(${minLat},${minLng},${maxLat},${maxLng})["tourism"="camp_site"];
-  relation(${minLat},${minLng},${maxLat},${maxLng})["tourism"="camp_site"];
-  node(${minLat},${minLng},${maxLat},${maxLng})["generator:source"="wind"];
-  node(${minLat},${minLng},${maxLat},${maxLng})["man_made"="tower"];
+  wr["landuse"~"^(residential|industrial|commercial|forest|retail|military|railway|cemetery|farmyard|vineyard|orchard)$"];
+  wr["natural"="wood"];
+  way["aeroway"="runway"];
+  wr["tourism"="camp_site"];
+  node["generator:source"="wind"];
+  node["man_made"="tower"];
 );
-out body;
->;
-out skel qt;`;
+out geom qt;`;
 
     // Overpass-API-Server für Redundanz/Fallback
     var endpoints = [
         'https://overpass-api.de/api/interpreter',
-        'https://lz4.overpass-api.de/api/interpreter',
         'https://z.overpass-api.de/api/interpreter',
+        'https://lz4.overpass-api.de/api/interpreter',
         'https://overpass.kumi.systems/api/interpreter',
         'https://overpass.private.coffee/api/interpreter'
     ];
+    var requestTimeoutMs = 75000; // Überlastete Server brauchen aktuell oft 30-45s
+    var maxRounds = 2;            // Alle Server bis zu zweimal durchprobieren
+    var startTime = Date.now();
 
     showStatus('Overpass-Daten werden geladen...', false, 0);
+
+    // Laufende Sekundenanzeige, damit klar ist, dass noch geladen wird
+    var statusText = '';
+    var elapsedTimer = setInterval(function() {
+        showStatus(statusText + ' – ' + Math.round((Date.now() - startTime) / 1000) + ' s', false, 0);
+    }, 1000);
 
     // Newlines entfernen, um Apache 406-Fehler zu vermeiden
     var cleanQuery = query.replace(/[\r\n]+/g, '').trim();
 
-    // Rekursive Funktion zum Versuchen verschiedener Overpass-Endpoints mit 20s Timeout
-    function fetchFromEndpoint(index) {
+    function wait(ms) {
+        return new Promise(function(resolve) { setTimeout(resolve, ms); });
+    }
+
+    // Versucht nacheinander alle Endpoints; nach einer erfolglosen Runde wird kurz gewartet (Backoff)
+    function fetchFromEndpoint(index, round) {
         if (index >= endpoints.length) {
-            return Promise.reject(new Error('Kein Overpass-API-Server erreichbar. Bitte prüfen Sie Ihre Internetverbindung.'));
+            if (round + 1 >= maxRounds) {
+                return Promise.reject(new Error('Kein Overpass-API-Server erreichbar. Bitte prüfen Sie Ihre Internetverbindung.'));
+            }
+            statusText = 'Alle Server ausgelastet, neuer Versuch gleich';
+            return wait(5000 * (round + 1)).then(function() {
+                return fetchFromEndpoint(0, round + 1);
+            });
         }
 
         var currentUrl = endpoints[index];
-        showStatus('Lade Geländedaten (Server ' + (index + 1) + '/' + endpoints.length + ')...', false, 0);
+        statusText = 'Lade Geländedaten (Server ' + (index + 1) + '/' + endpoints.length +
+            (round > 0 ? ', Versuch ' + (round + 1) : '') + ')';
 
         var controller = new AbortController();
         var timeoutId = setTimeout(function() {
             controller.abort();
-        }, 20000);
-
+        }, requestTimeoutMs);
 
         return fetch(currentUrl, {
             method: 'POST',
@@ -380,25 +396,34 @@ out skel qt;`;
             body: 'data=' + encodeURIComponent(cleanQuery),
             signal: controller.signal
         }).then(function(response) {
-            clearTimeout(timeoutId);
             if (!response.ok) {
-                console.warn('Overpass Endpoint ' + currentUrl + ' lieferte Status ' + response.status + ', versuche nächsten...');
-                return fetchFromEndpoint(index + 1);
+                throw new Error('HTTP ' + response.status);
             }
             return response.json();
+        }).then(function(data) {
+            clearTimeout(timeoutId);
+            // Overpass liefert bei Abbruch (Timeout/Speicher) Status 200 mit "remark" und unvollständigen Daten
+            if (data.remark && /runtime error|timed out|out of memory/i.test(data.remark)) {
+                throw new Error('Unvollständige Antwort: ' + data.remark);
+            }
+            return data;
         }).catch(function(err) {
             clearTimeout(timeoutId);
             if (err.name === 'AbortError') {
-                console.warn('Overpass Endpoint ' + currentUrl + ' hat nach 20s nicht geantwortet (Timeout), versuche nächsten...');
+                console.warn('Overpass Endpoint ' + currentUrl + ' hat nach ' + (requestTimeoutMs / 1000) + 's nicht geantwortet (Timeout), versuche nächsten...');
             } else {
-                console.warn('Fehler bei Overpass Endpoint ' + currentUrl + ':', err);
+                // Hinweis: Überlastete Server (429/502/504) senden keinen CORS-Header -> erscheint als "Failed to fetch"
+                console.warn('Fehler bei Overpass Endpoint ' + currentUrl + ':', err.message || err);
             }
-            return fetchFromEndpoint(index + 1);
+            return fetchFromEndpoint(index + 1, round);
         });
     }
 
     // Daten abrufen
-    fetchFromEndpoint(0)
+    fetchFromEndpoint(0, 0)
+        .finally(function() {
+            clearInterval(elapsedTimer);
+        })
         .then(function(data) {
             // Daten in GeoJSON umwandeln
             var geojson = osmtogeojson(data);

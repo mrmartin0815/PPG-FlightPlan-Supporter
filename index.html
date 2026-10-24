@@ -35,18 +35,6 @@
     <!-- Status-Anzeige für Datenabfragen -->
     <div id="status-message" class="hidden"></div>
 
-    <!-- Warnung bei file://-Protokoll (Overpass API blockiert Anfragen ohne gültigen Referer) -->
-    <div id="file-protocol-warning" style="display:none; position:fixed; top:0; left:0; right:0; z-index:99999; background:#c0392b; color:#fff; padding:14px 20px; font-family:sans-serif; font-size:14px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.4);">
-        ⚠️ <strong>Diese Seite wurde direkt als Datei geöffnet (file://)</strong> – die Geländedaten-Abfrage funktioniert so leider nicht.
-        Bitte öffnen Sie die Seite über einen Webserver (z.B. <code>start.bat</code> auf dem PC oder via GitHub Pages).
-        <button onclick="document.getElementById('file-protocol-warning').style.display='none'" style="margin-left:16px; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.5); color:#fff; padding:4px 10px; cursor:pointer; border-radius:4px;">×</button>
-    </div>
-    <script>
-        if (window.location.protocol === 'file:') {
-            document.getElementById('file-protocol-warning').style.display = 'block';
-        }
-    </script>
-
     <!-- Skripte am Ende des Body-Bereichs -->
     <!-- Leaflet JavaScript -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -59,6 +47,6 @@
     <!-- Leaflet GeometryUtil Bibliothek -->
     <script src="https://unpkg.com/leaflet-geometryutil"></script>
     <!-- Ihr eigenes Skript -->
-    <script src="script.js"></script>
+    <script src="script.js?v=2"></script>
 </body>
 </html>
