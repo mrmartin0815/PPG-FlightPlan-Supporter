@@ -2,9 +2,14 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Kartenanwendung</title>
+    <title>PPG FlightPlanHelper</title>
+    <!-- PWA: Manifest, Icons, Farbe der Statusleiste -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#1e3a5f">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Eigene CSS -->
     <link rel="stylesheet" href="styles.css">
     <meta name="referrer" content="no-referrer-when-downgrade">
@@ -37,16 +42,24 @@
 
     <!-- Skripte am Ende des Body-Bereichs -->
     <!-- Leaflet JavaScript -->
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Esri Leaflet Plugin für zusätzliche Layer -->
-    <script src="https://unpkg.com/esri-leaflet"></script>
+    <script src="https://unpkg.com/esri-leaflet@3.0.19/dist/esri-leaflet.js"></script>
     <!-- OSM to GeoJSON Converter -->
     <script src="https://unpkg.com/osmtogeojson@2.2.12/osmtogeojson.js"></script>
     <!-- Turf.js Bibliothek -->
     <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
     <!-- Leaflet GeometryUtil Bibliothek -->
-    <script src="https://unpkg.com/leaflet-geometryutil"></script>
+    <script src="https://unpkg.com/leaflet-geometryutil@0.11.0/src/leaflet.geometryutil.js"></script>
     <!-- Ihr eigenes Skript -->
     <script src="script.js?v=2"></script>
+    <!-- Service Worker für die Installation als App (nur über http/https, nicht per file://) -->
+    <script>
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            navigator.serviceWorker.register('sw.js').catch(function(err) {
+                console.warn('Service Worker konnte nicht registriert werden:', err);
+            });
+        }
+    </script>
 </body>
 </html>

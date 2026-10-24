@@ -47,6 +47,12 @@ Es ist keine Installation oder ein Backend-Server erforderlich. Das Tool läuft 
 3. Alternativ kann die Seite direkt über **GitHub Pages** gehostet und genutzt werden – praktisch für die Nutzung auf dem Smartphone.
 4. Optional: [`start.bat`](start.bat) startet einen lokalen Webserver (benötigt Python) und öffnet die App unter `http://localhost:8080`.
 
+### 📱 Als App auf dem Smartphone installieren
+
+Die App ist eine PWA (Progressive Web App). Öffne die GitHub-Pages-Adresse in **Chrome auf Android** und wähle im Menü **„App installieren“** bzw. **„Zum Startbildschirm hinzufügen“**. Sie startet dann mit eigenem Icon im Vollbild. Auf dem iPhone geht das in Safari über **Teilen → „Zum Home-Bildschirm“**.
+
+Die App selbst wird zwischengespeichert; für Karten und Geländedaten ist weiterhin eine Internetverbindung nötig.
+
 > **Hinweis:** Die Geländedaten kommen von den öffentlichen Overpass-Servern, die häufig stark ausgelastet sind. Eine Abfrage kann daher 30–60 Sekunden dauern; die App probiert bei Überlastung automatisch mehrere Server und wiederholt die Anfrage.
 
 ---
