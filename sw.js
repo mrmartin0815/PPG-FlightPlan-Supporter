@@ -2,12 +2,12 @@
 // Strategie: App-Dateien "network first" (Updates kommen sofort an, offline gibt es die letzte Version),
 // Bibliotheken vom CDN "cache first" (versionsgenau, ändern sich nie).
 // Overpass-Abfragen (POST) und Kartenkacheln werden bewusst nicht angefasst.
-var CACHE = 'ppg-flightplan-v1';
+var CACHE = 'ppg-flightplan-v2';
 
 var APP_FILES = [
     './',
     'index.html',
-    'script.js?v=2',
+    'script.js?v=3',
     'styles.css',
     'manifest.webmanifest',
     'icons/icon-192.png',

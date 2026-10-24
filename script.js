@@ -297,9 +297,6 @@ function fetchOverpassData() {
         map.removeLayer(overpassLayer);
     }
 
-    // Polyline temporär entfernen
-    map.removeLayer(polyline);
-
     // Bounding Box berechnen
     var bufferDistance; // in Metern
     var latlngs = markers.map(function(m) { return m.getLatLng(); });
@@ -520,16 +517,14 @@ out geom qt;`;
                 }
             }).addTo(map);
 
-            // Polyline wieder hinzufügen, damit sie über dem Overpass-Layer liegt
-            polyline.addTo(map);
+            // Route nach vorne holen, damit sie über dem Overpass-Layer liegt
+            polyline.bringToFront();
 
             var count = data && data.elements ? data.elements.length : 0;
             showStatus('Geländedaten geladen (' + count + ' Objekte)!', false, 4000);
         })
         .catch(function(error) {
             console.error('Fehler bei der Overpass-API-Abfrage:', error);
-            // Bei einem Fehler die Polyline trotzdem wieder hinzufügen
-            polyline.addTo(map);
             showStatus('Fehler: Overpass-Server nicht erreichbar. Bitte später erneut versuchen.', true, 6000);
         })
         .finally(function() {
